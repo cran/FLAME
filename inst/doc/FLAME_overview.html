@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Vittorio Orlandi" />
+
+<meta name="date" content="2020-04-11" />
+
+<title>Introduction to FLAME</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to FLAME</h1>
+<h4 class="author">Vittorio Orlandi</h4>
+<h4 class="date">2020-04-11</h4>
+
+
+
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>FLAME (Fast, Large-scale Almost Matching Exactly) is a fast, interpretable matching method for causal inference. It matches units via a learned, weighted Hamming distance that determines which covariates are more important to match on. For more details, see the below section <em>Description of the Algorithm</em> or the original FLAME paper, linked <a href="https://arxiv.org/pdf/1707.06315.pdf">here</a>.</p>
+</div>
+<div id="making-matches" class="section level2">
+<h2>Making Matches</h2>
+<p>We can start by loading FLAME…</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(FLAME)</a></code></pre></div>
+<p>… and generating some toy data using the included <code>gen_data</code> function.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">45</span>)</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">n &lt;-<span class="st"> </span><span class="dv">100</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">p &lt;-<span class="st"> </span><span class="dv">5</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">data &lt;-<span class="st"> </span><span class="kw">gen_data</span>(n, p) <span class="co"># Data we would like to match</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">holdout &lt;-<span class="st"> </span><span class="kw">gen_data</span>(n, p) <span class="co"># Data we will train on, to compute PE </span></a></code></pre></div>
+<p>Note that all our covariates are <em>factors</em>, because FLAME is designed to work with categorical covariates:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">all</span>(<span class="kw">sapply</span>(<span class="dv">1</span><span class="op">:</span>p, <span class="cf">function</span>(col) <span class="kw">is.factor</span>(data[[col]])))</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co">#&gt; [1] TRUE</span></a></code></pre></div>
+<p>If this is not the case, they will be assumed to be continuous covariates and binned prior to matching. <em>This use of FLAME is not recommended.</em> <strong>To be clear: any covariates that are not continuous, that you would like to match exactly on, must be passed to <code>FLAME</code> as factors.</strong></p>
+<p>In addition to the covariates to match on, <code>data</code> contains an outcome and a treated column:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">names</span>(data)</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="co">#&gt; [1] &quot;X1&quot;      &quot;X2&quot;      &quot;X3&quot;      &quot;X4&quot;      &quot;X5&quot;      &quot;outcome&quot; &quot;treated&quot;</span></a></code></pre></div>
+<p>The outcome must be numeric, either binary or continuous. FLAME focuses on binary treatments and the treatment column must either be logical or binary numeric.</p>
+<p>From here, we can run FLAME with its default parameters. This will match units on the covariates – here, <code>X1</code>, <code>X2</code>, <code>X3</code>, <code>X4</code>, <code>X5</code> – and output information about the matches that were made.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">FLAME_out &lt;-<span class="st"> </span><span class="kw">FLAME</span>(<span class="dt">data =</span> data, <span class="dt">holdout =</span> holdout)</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">#&gt; FLAME stopping: all control units matched</span></a></code></pre></div>
+<p>By default, <code>FLAME</code> returns a list with 6 entries:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">names</span>(FLAME_out)</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="co">#&gt; [1] &quot;data&quot;          &quot;MGs&quot;           &quot;CATE&quot;          &quot;matched_on&quot;   </span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co">#&gt; [5] &quot;matching_covs&quot; &quot;dropped&quot;</span></a></code></pre></div>
+<p>The first, <code>FLAME_out$data</code> contains the original data frame with several modifications:</p>
+<ol style="list-style-type: decimal">
+<li>There is an extra logical column, <code>FLAME_out$data$matched</code>, that indicates whether or not a unit was matched. This can be useful if, for example, you’d like to use only the units that were matched for subsequent analysis:</li>
+</ol>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">matched_data &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span class="kw">filter</span>(FLAME_out<span class="op">$</span>data, matched)</a></code></pre></div>
+<ol start="2" style="list-style-type: decimal">
+<li><p>There is an extra numeric column, <code>FLAME_out$data$weight</code> that denotes on how many different sets of covariates a unit was matched. By default, this will be 1 if a unit is matched and 0 otherwise. With the <code>replace = TRUE</code> argument, however, units are allowed to match several times on multiple sets of covariates and their values for <code>weight</code> can therefore be greater than 1. These weights can be used when estimating treatment effects.</p></li>
+<li><p>Regardless of their original names, the columns denoting treatment and outcome in the data will be renamed <code>treated</code> and <code>outcome</code> and they are moved to be located after all the covariate data.</p></li>
+<li><p>Units that were not matched on all covariates, will have a * in place of their covariate value for all covariates for which they were not matched.</p></li>
+</ol>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">head</span>(FLAME_out<span class="op">$</span>data)</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="co">#&gt;   X1 X2 X3 X4 X5    outcome treated matched weight</span></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="co">#&gt; 1  1  1  0  *  * 10.6908610       1    TRUE      1</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4"><span class="co">#&gt; 2  0  0  0  0  0 -0.3718777       0    TRUE      1</span></a>
+<a class="sourceLine" id="cb8-5" data-line-number="5"><span class="co">#&gt; 3  *  *  *  *  * -0.4749807       1   FALSE      0</span></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6"><span class="co">#&gt; 4  0  0  0  1  0 -0.8616791       0    TRUE      1</span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7"><span class="co">#&gt; 5  *  *  *  *  *  2.5016291       1   FALSE      0</span></a>
+<a class="sourceLine" id="cb8-8" data-line-number="8"><span class="co">#&gt; 6  0  0  0  1  0 -0.1160383       0    TRUE      1</span></a></code></pre></div>
+<p>The above, for example, implies that while unit 2 was matched to units that also had values (<code>X1</code>, <code>X2</code>, <code>X3</code>, <code>X4</code>, <code>X5</code>) = (0, 0, 0, 0, 0), unit 1 was matched to units that shared values of (<code>X1</code>, <code>X2</code>, <code>X3</code>) = (1, 1, 0), but that differed in their values of <code>X4</code> and <code>X5</code>. Units 3 and 5 were not matched at all.</p>
+<p>The second, <code>MGs</code> is a list, each entry of which contains the units in a single matched group.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1">FLAME_out<span class="op">$</span>MGs[[<span class="dv">1</span>]]</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="co">#&gt; [1]  2 58 60 75 95</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="kw">length</span>(FLAME_out<span class="op">$</span>MGs)</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4"><span class="co">#&gt; [1] 19</span></a></code></pre></div>
+<p>That is, units 2, 58, 60, 75, and 95 were all matched together and there are 19 matched groups total.</p>
+<p>The third, <code>CATE</code>, complements <code>MGs</code> by supplying the conditional average treatment effect (CATE) for each matched group. For example, the CATE of the matched group above is given by:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1">FLAME_out<span class="op">$</span>CATE[<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="co">#&gt; [1] 2.486726</span></a></code></pre></div>
+<p>The fourth, <code>matched_on</code>, is a list also corresponding to <code>MGs</code> that gives the covariates, and their values, on which units in each matched group were matched.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">FLAME_out<span class="op">$</span>matched_on[[<span class="dv">1</span>]]</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="co">#&gt;   X1 X2 X3 X4 X5</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3"><span class="co">#&gt; 1  0  0  0  0  0</span></a></code></pre></div>
+<p>The above shows that each of the units in the first matched group had covariate values (<code>X1</code>, <code>X2</code>, <code>X3</code>, <code>X4</code>, <code>X5</code>) = (0, 0, 0, 0, 0). For matched groups not formed on all covariates, some of these entries will be missing:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">FLAME_out<span class="op">$</span>matched_on[[<span class="dv">17</span>]]</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2"><span class="co">#&gt;   X1 X2 X3 X4</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"><span class="co">#&gt; 1  0  0  1  1</span></a></code></pre></div>
+<p>Thus, the units in the 17th matched group, as defined by <code>MGs[[7]]</code>, shared the same values of <code>X1</code>, <code>X2</code>, <code>X3</code>, and <code>X4</code>, but not of <code>X5</code>.</p>
+<p>The fifth, <code>matching_covs</code> is a list, which shows the covariates for matching on every iteration of FLAME:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1">FLAME_out<span class="op">$</span>matching_covs</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb13-3" data-line-number="3"><span class="co">#&gt; [1] &quot;X1&quot; &quot;X2&quot; &quot;X3&quot; &quot;X4&quot; &quot;X5&quot;</span></a>
+<a class="sourceLine" id="cb13-4" data-line-number="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb13-5" data-line-number="5"><span class="co">#&gt; [[2]]</span></a>
+<a class="sourceLine" id="cb13-6" data-line-number="6"><span class="co">#&gt; [1] &quot;X1&quot; &quot;X2&quot; &quot;X3&quot; &quot;X4&quot;</span></a>
+<a class="sourceLine" id="cb13-7" data-line-number="7"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb13-8" data-line-number="8"><span class="co">#&gt; [[3]]</span></a>
+<a class="sourceLine" id="cb13-9" data-line-number="9"><span class="co">#&gt; [1] &quot;X1&quot; &quot;X2&quot; &quot;X3&quot;</span></a></code></pre></div>
+<p>Thus, first, matches were attempted on covariates <code>X1</code>, <code>X2</code>, <code>X3</code>, <code>X4</code>, <code>X5</code>. Then, matches were attempted on all covariates but <code>X5</code>, and so on. Note that entries of <code>matching_covs</code> do not necessarily denote covariates on which matches were <em>successfully</em> made; rather, they denote the covariates which were used to (try and) match on every iteration of FLAME.</p>
+<p>The sixth, <code>dropped</code> describes the order in which covariates were dropped:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1">FLAME_out<span class="op">$</span>dropped</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="co">#&gt; [1] &quot;X5&quot; &quot;X4&quot;</span></a></code></pre></div>
+<p>Thus, first covariate <code>X5</code> was dropped, then <code>X4</code>, and so on. This information is directly inferrable from <code>matching_covs</code>, but for large numbers of covariates, <code>dropped</code> provides an easier way of identifying this order.</p>
+</div>
+<div id="analyzing-matches" class="section level2">
+<h2>Analyzing Matches</h2>
+<p>After <code>FLAME</code> has been run, the matched data can be used for a variety of purposes. The <code>FLAME</code> package provides functionality for a few quick, post-matching analyses, via the functions <code>MG</code>, <code>CATE</code>, <code>ATE</code>, and <code>ATT</code>.</p>
+<p>The function <code>MG(units, FLAME_out, index_only = FALSE)</code> takes in a vector of units, whose matched groups you would like returned, and the output of a call to <code>FLAME</code>. If we want to see the matched group of units 1 and 2, for example, we can run:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">MG</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), FLAME_out)</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3"><span class="co">#&gt;    X1 X2 X3 X4 X5   outcome treated</span></a>
+<a class="sourceLine" id="cb15-4" data-line-number="4"><span class="co">#&gt; 1   1  1  0  *  * 10.690861       1</span></a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="co">#&gt; 8   1  1  0  *  *  8.796627       1</span></a>
+<a class="sourceLine" id="cb15-6" data-line-number="6"><span class="co">#&gt; 12  1  1  0  *  * 11.365257       1</span></a>
+<a class="sourceLine" id="cb15-7" data-line-number="7"><span class="co">#&gt; 28  1  1  0  *  *  8.200261       1</span></a>
+<a class="sourceLine" id="cb15-8" data-line-number="8"><span class="co">#&gt; 74  1  1  0  *  *  5.205795       0</span></a>
+<a class="sourceLine" id="cb15-9" data-line-number="9"><span class="co">#&gt; 76  1  1  0  *  * 10.140320       1</span></a>
+<a class="sourceLine" id="cb15-10" data-line-number="10"><span class="co">#&gt; 91  1  1  0  *  *  5.551738       0</span></a>
+<a class="sourceLine" id="cb15-11" data-line-number="11"><span class="co">#&gt; 93  1  1  0  *  *  3.492163       0</span></a>
+<a class="sourceLine" id="cb15-12" data-line-number="12"><span class="co">#&gt; 97  1  1  0  *  *  3.752434       0</span></a>
+<a class="sourceLine" id="cb15-13" data-line-number="13"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb15-14" data-line-number="14"><span class="co">#&gt; [[2]]</span></a>
+<a class="sourceLine" id="cb15-15" data-line-number="15"><span class="co">#&gt;    X1 X2 X3 X4 X5    outcome treated</span></a>
+<a class="sourceLine" id="cb15-16" data-line-number="16"><span class="co">#&gt; 2   0  0  0  0  0 -0.3718777       0</span></a>
+<a class="sourceLine" id="cb15-17" data-line-number="17"><span class="co">#&gt; 58  0  0  0  0  0  0.6972013       0</span></a>
+<a class="sourceLine" id="cb15-18" data-line-number="18"><span class="co">#&gt; 60  0  0  0  0  0  2.9151768       1</span></a>
+<a class="sourceLine" id="cb15-19" data-line-number="19"><span class="co">#&gt; 75  0  0  0  0  0  1.0590852       0</span></a>
+<a class="sourceLine" id="cb15-20" data-line-number="20"><span class="co">#&gt; 95  0  0  0  0  0  0.3293956       0</span></a></code></pre></div>
+<p>This returns a list of two data frames, the first corresponding to unit 1 and the second to unit 2. Each contains information for all units in the corresponding matched groups. The asterisks in the last two columns of the first data frame indicate that these units did not match on <code>X4</code> or <code>X5</code>. If we only want the indices of the units in each matched group, we can specify <code>index_only = TRUE</code>:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">MG</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), FLAME_out, <span class="dt">index_only =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="co">#&gt; [1]  1  8 12 28 74 76 91 93 97</span></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb16-5" data-line-number="5"><span class="co">#&gt; [[2]]</span></a>
+<a class="sourceLine" id="cb16-6" data-line-number="6"><span class="co">#&gt; [1]  2 58 60 75 95</span></a></code></pre></div>
+<p><code>CATE(units, FLAME_out)</code> takes in the same first two arguments and gives the estimated CATEs of the units in <code>units</code>. The CATE of a unit is defined to be the CATE of its matched group and the CATE of a matched group is difference between average treated and control outcomes in the matched group.</p>
+<p>The CATEs of units 1 and 2 are thus</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">CATE</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), FLAME_out)</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb17-3" data-line-number="3"><span class="co">#&gt; [1] 5.338132</span></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb17-5" data-line-number="5"><span class="co">#&gt; [[2]]</span></a>
+<a class="sourceLine" id="cb17-6" data-line-number="6"><span class="co">#&gt; [1] 2.486726</span></a></code></pre></div>
+<p><code>ATE(FLAME_out)</code> and <code>ATT(FLAME_out)</code> take in the output of a call to <code>FLAME</code> and return the estimated average treatment effect and the estimated average treatment effect on the treated, respectively.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">ATE</span>(<span class="dt">FLAME_out =</span> FLAME_out)</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2"><span class="co">#&gt; [1] 5.256365</span></a>
+<a class="sourceLine" id="cb18-3" data-line-number="3"><span class="kw">ATT</span>(<span class="dt">FLAME_out =</span> FLAME_out)</a>
+<a class="sourceLine" id="cb18-4" data-line-number="4"><span class="co">#&gt; [1] 10.76562</span></a></code></pre></div>
+</div>
+</div>
+<div id="description-of-arguments" class="section level1">
+<h1>Description of Arguments</h1>
+<p>Below are brief descriptions of the main arguments that may be passed to <code>FLAME</code>. For their complete descriptions, and those of all acceptable arguments, please refer to the documentation.</p>
+<div id="data-arguments" class="section level2">
+<h2>Data Arguments</h2>
+<p>These are arguments that govern the format in which data is passed to <code>FLAME</code>.</p>
+<ul>
+<li><code>data</code>: Either a data frame or path to a .csv file containing the data to be matched. If a path to a .csv file, all covariates will be assumed to be categorical Treatments are assumed to be binary (can be input as logical) and outcomes numeric or binary. Treatments and outcome should not be coded as factors. Covariates should be factors; otherwise, they will be interpreted as continuous covariates and binned prior to matching. Using FLAME to match on binned, continuous covariates is <em>not</em> recommended. In addition, if a supplied factor has <span class="math inline">\(k\)</span> levels, they must be: <span class="math inline">\(0, 1, \dots, k - 1\)</span>. This will change in a future update.</li>
+<li><code>holdout</code>: Either a data frame, or path to a .csv file or a value between 0 and 1. In the first two cases, the argument indicates the holdout set to be used for computing predictive error. In the third case, that proportion of <code>data</code> will be used as a holdout set and only the remaining proportion will be matched. In this case, the rows (units) of the original <code>data</code> input to <code>FLAME</code> that are matched are those specified by <code>rownames(FLAME_out$data)</code>. Restrictions on column types are the same as for <code>data</code>. Must have same column names and order as <code>data</code>.</li>
+<li><code>treated_column_name</code>: A character with the name of the column to be used as treatment in <code>data</code>. Defaults to ‘treated’.</li>
+<li><code>outcome_column_name</code>: A character with the name of the column to be used as outcome in <code>data</code>. Defaults to ‘outcome’.</li>
+</ul>
+</div>
+<div id="algorithmic-arguments" class="section level2">
+<h2>Algorithmic Arguments</h2>
+<p>These are arguments that deal with features of the underlying FLAME algorithm.</p>
+<ul>
+<li><code>C</code>: The hyperparameter governing the relative weights of the balancing factor and predictive error in determining match quality.</li>
+<li><code>replace</code>: If <code>TRUE</code>, allows the same unit to be matched multiple times, on different sets of covariates. For example, if <code>TRUE</code> and two units match exactly on all covariates, they will also match on every subsequent iteration of FLAME.</li>
+<li><code>verbose</code>: Controls how FLAME displays progress while running. If 0, no output. If 1, only outputs the stopping condition. If 2, outputs the iteration and number of unmatched units every 5 iterations, and the stopping condition. If 3, outputs the iteration and number of unmatched units every iteration, and the stopping condition.</li>
+<li><code>PE_method</code>: One of ‘ridge’ or ‘xgb’, respectively denoting whether ridge regression or xgboost is used to compute the predictive error on the holdout set. The former relies on <code>glmnet::cv.glmnet</code> and cross validates over <span class="math inline">\(\lambda\)</span>, with <code>alpha = 0</code>, <code>nfolds = 5</code>, and all other parameters at their defaults. The latter relies on <code>xgboost::xgb.cv</code> and cross validates over a grid of <code>eta</code>, <code>max_depth</code>, <code>alpha</code>, <code>nrounds</code>, and <code>subsample</code>, leaving all other parameters at their defaults. Ignored if <code>user_PE_fit</code> is supplied.</li>
+<li><code>user_PE_fit</code> and <code>user_PE_fit_params</code>: <code>user_PE_fit</code>, is an optional, user supplied function that fits a model for an outcome from covariates. Must take in a matrix of covariates as its first argument and a vector outcome as its second argument. If supplied, <code>PE_method</code> will be ignored. <code>user_PE_fit_params</code>, is a named list of optional parameters to be used by <code>user_PE_fit</code>.</li>
+<li><code>user_PE_predict</code> and <code>user_PE_predict_params</code>: <code>user_PE_predict</code> is an optional, user supplied function to generate predictions from the output of <code>user_PE_fit</code>. It must take the output of <code>user_PE_fit</code> as its first argument and a matrix of values for which to make predictions as its second argument. If not supplied, defaults to <code>predict</code>. <code>user_PE_predict_params</code> is a named list of optional parameters to be used by <code>user_PE_predict</code>.</li>
+</ul>
+<p>To illustrate the usage of these last four parameters, we can have <code>FLAME</code> compute PE via Bayesian Additive Regression Trees (BART) with 100 trees as follows:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">library</span>(dbarts)</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2">my_fit &lt;-<span class="st"> </span>dbarts<span class="op">::</span>bart</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3">my_fit_params &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">ntree =</span> <span class="dv">100</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>, <span class="dt">keeptrees =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb19-4" data-line-number="4">my_predict &lt;-<span class="st"> </span><span class="cf">function</span>(bart_fit, new_data) {</a>
+<a class="sourceLine" id="cb19-5" data-line-number="5">  <span class="kw">return</span>(<span class="kw">colMeans</span>(<span class="kw">predict</span>(bart_fit, new_data)))</a>
+<a class="sourceLine" id="cb19-6" data-line-number="6">}</a>
+<a class="sourceLine" id="cb19-7" data-line-number="7">FLAME_out &lt;-<span class="st"> </span></a>
+<a class="sourceLine" id="cb19-8" data-line-number="8"><span class="st">  </span><span class="kw">FLAME</span>(<span class="dt">data =</span> data, <span class="dt">holdout =</span> holdout, </a>
+<a class="sourceLine" id="cb19-9" data-line-number="9">        <span class="dt">user_PE_fit =</span> my_fit, <span class="dt">user_PE_fit_params =</span> my_fit_params,</a>
+<a class="sourceLine" id="cb19-10" data-line-number="10">        <span class="dt">user_PE_predict =</span> my_predict)</a></code></pre></div>
+</div>
+<div id="early-stopping-arguments" class="section level2">
+<h2>Early Stopping Arguments</h2>
+<p>By default, FLAME terminates when all covariates have been dropped or all control / treatment units have been matched. There are various early stopping arguments that can be supplied to alter this behavior. In all cases, however, FLAME still terminates if all covariates have been dropped or all control / treatment units have been matched, even if the user-specified stopping condition has not yet been met.</p>
+<ul>
+<li><p><code>early_stop_iterations</code>: A number of iterations, corresponding to a number of covariates dropped, after which FLAME will automatically stop. A value of 0 has FLAME perform a single round of exact matching on all covariates and then stop.</p></li>
+<li><p><code>early_stop_epsilon</code>: If FLAME attemts to drop a covariate that would raise the PE above (1 + early_stop_epsilon) times the baseline PE (the PE before any covariates have been dropped), FLAME will stop.</p></li>
+<li><p><code>early_stop_bf</code>: If FLAME attempts to drop a covariate that would lead to a BF below this value, FLAME stops.</p></li>
+<li><p><code>early_stop_pe</code>: If FLAME attempts to drop a covariate that would lead to a PE below this value, FLAME stops.</p></li>
+<li><p><code>early_stop_control</code>: If FLAME attempts to drop a covariate that would lead the proportion of control units that are unmatched to fall below this value, FLAME stops.</p></li>
+<li><p><code>early_stop_treated</code>: If FLAME attempts to drop a covariate that would lead the proportion of treatment units that are unmatched to fall below this value, FLAME stops.</p></li>
+</ul>
+</div>
+<div id="missing-data-arguments" class="section level2">
+<h2>Missing Data Arguments</h2>
+<p>FLAME offers several options for dealing with missing data, outlined below:</p>
+<ul>
+<li><p><code>missing_data</code> and <code>n_data_imputations</code>: These two arguments govern FLAME’s response to missingness in the data to be matched. If <code>missing_data</code> is 0, it is assumed that there is no missingness. If it is 1, units with missingness are dropped. If it is 2, <code>n_data_imputations</code> imputed datasets are generated using <code>mice::mice</code>. In this case, the FLAME algorithm will be run on each imputed dataset and all results returned. If it is 3, units will be prevented from matching on the covariates they are missing.</p></li>
+<li><p><code>missing_holdout</code> and <code>n_holdout_imputations</code>: These two arguments govern FLAME’s response to missingness in the holdout data. If <code>missing_holdout</code> is 0, it is assumed that there is no missingness. If it is 1, units with missingness are dropped. If it is 2, <code>n_holdout_imputations</code> imputed holdout datasets are generated using <code>mice::mice</code>. In this case, the predictive error computed by <code>FLAME</code> is the average of the predictive errors across the imputed holdout datasets.</p></li>
+</ul>
+</div>
+</div>
+<div id="description-of-the-algorithm" class="section level1">
+<h1>Description of the Algorithm</h1>
+<p>FLAME operates by iteratively matching all possible units on a set of covariates and then dropping one of those covariates to make more matches. Roughly, units are said to ‘match’ on a set of covariates if they have identical values of all those covariates. FLAME is thus designed to be run on categorical covariates. However, continuous covariates can be discretized, via histogram binning rules and then passed to FLAME.</p>
+<p>More specifically, we define our inputs to the algorithm as the datasets <span class="math inline">\(\mathcal{S} = (X, Y, T)\)</span> and <span class="math inline">\(\mathcal{S}^H = (X^H, Y^H, T^H)\)</span>, where <span class="math inline">\(X \in \mathbb{R}^{n \times d}\)</span> denotes the <span class="math inline">\(d\)</span> covariates of the <span class="math inline">\(n\)</span> units, <span class="math inline">\(Y \in \mathbb{R}^n\)</span> denotes their outcomes, and <span class="math inline">\(T \in \mathbb{R}^n\)</span> denotes their <em>binary</em> treatment assignments. We will refer to a unit <span class="math inline">\(i\)</span> as ‘control’ if <span class="math inline">\(T_i = 0\)</span> and as ‘treated’ if <span class="math inline">\(T_i = 1\)</span>. The dataset <span class="math inline">\(\mathcal{S}^H\)</span> is identically structured, but for a separate, holdout set of units.</p>
+<p>We denote the covariates used to match on an iteration <span class="math inline">\(l\)</span> by a binary vector <span class="math inline">\(\boldsymbol{\theta}^{l} \in \mathbb{R}^d\)</span>. The <span class="math inline">\(j\)</span>’th entry of <span class="math inline">\(\boldsymbol{\theta}^{l}\)</span> denotes whether the <span class="math inline">\(j\)</span>’th covariate is used to match units on iteration <span class="math inline">\(l\)</span>. When we go from iteration <span class="math inline">\(l\)</span> to iteration <span class="math inline">\(l + 1\)</span>, we change a single entry of <span class="math inline">\(\boldsymbol{\theta}^{l}\)</span> from 1 to 0 to generate <span class="math inline">\(\boldsymbol{\theta}^{l+1}\)</span> and then match all possible units on <span class="math inline">\(\boldsymbol{\theta}^{l+1}\)</span>. <em>There are two key points regarding these matches:</em> 1: matches are only made for units in <span class="math inline">\(\mathcal{S}\)</span> and not for units in <span class="math inline">\(\mathcal{S}^H\)</span> and 2: units with identical values of the covariates indicated by <span class="math inline">\(\boldsymbol{\theta}^{l+1}\)</span> are only matched if at least one is control and one is treated.</p>
+<p>More specifically, FLAME begins with <span class="math inline">\(\boldsymbol{\theta}^{0} = \mathbf{1}_d\)</span>; that is, by attempting to match units on all covariates. At any iteration <span class="math inline">\(l\)</span>, it then drops the covariate yielding the greatest increase in match quality (<span class="math inline">\(\mathtt{MQ}\)</span>), defined as <span class="math inline">\(\mathtt{MQ} := C \cdot \mathtt{BF} - \mathtt{PE}\)</span>, where <span class="math inline">\(C\)</span> is a hyperparameter. The balancing factor, <span class="math inline">\(\mathtt{BF}\)</span>, at an iteration <span class="math inline">\(l\)</span>, is defined as the proportion of control units, plus the proportion of treated units, that are matched <em>by the update from</em> <span class="math inline">\(\boldsymbol{\theta}^{l}\)</span> <em>to</em> <span class="math inline">\(\boldsymbol{\theta}^{l + 1}\)</span>. The predictive error, <span class="math inline">\(\mathtt{PE}\)</span>, at an iteration <span class="math inline">\(l\)</span>, is defined as the training MSE incurred when predicting <span class="math inline">\(Y^{H}\)</span> from the subset of <span class="math inline">\(X^H\)</span> indicated by <span class="math inline">\(\boldsymbol{\theta}^{l + 1}\)</span>. In this way, FLAME encourages making many matches (lowering variance of treatment effect estimates) and matching on covariates important to the outcome (lowering bias of treatment effect estimates).</p>
+<p>By default, the algorithm terminates when all covariates have been dropped or all treated/control units have been matched, but we provide several options for early stopping, described above</p>
+<p>For more details, see <a href="https://arxiv.org/pdf/1707.06315.pdf">the FLAME paper</a></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
