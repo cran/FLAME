@@ -4,57 +4,60 @@
 \alias{CATE}
 \title{Conditional Average Treatment Effects}
 \usage{
-CATE(units, FLAME_out, multiple = FALSE)
+CATE(units, ame_out)
 }
 \arguments{
-\item{units}{A vector of indices for the units whose CATEs
-are desired.}
+\item{units}{A vector of units whose CATE estimates are desired.}
 
-\item{FLAME_out}{The output of a call to \code{\link{FLAME}}.}
-
-\item{multiple}{A logical scalar. If \code{FALSE} (default), then \code{CATE}
-will return CATEs of main matched groups (those with matches on the
-greatest number of covariates). See below for details.}
+\item{ame_out}{An object of class \code{ame}.}
 }
 \value{
-\strong{If passing a single set of matched data}
-
-  A list of length \code{length(units)}. Each entry is a CATE (a numeric
-  scalar) (if \code{multiple = FALSE}) or a list of CATEs (if \code{multiple
-  = TRUE}). If a unit is not matched, the corresponding CATE will be
-  \code{NULL}.
-
-  Note that this is the return format also if passing a single set of
-  imputed data.
-
-  \strong{If passing multiple sets of matched, imputed data}
-
-  A list of length \code{length(FLAME_out)}, where each entry has the
-  structure described above, corresponding to that imputed data set.
+A matrix whose columns correspond to CATE estimates and their
+  variances and whose rows correspond to queried units. \code{NA}'s therein
+  correspond to inestimable quantities.
 }
 \description{
-\code{CATE} returns the conditional
-average treatment effects (CATEs) of \code{units}.
+\code{CATE} returns an estimate of the conditional average treatment effect
+for the subgroup defined by \code{units}.
 }
 \details{
-The CATE of a matched group is defined to be the difference between average
-treated and control outcomes within that matched group. When we refer to
-the CATE(s) of a unit, we mean the CATE(s) of its matched group(s).
+This function returns CATE estimates and the estimated variances of such
+estimates for \code{units} of interest. The CATE of a given unit is estimated
+by the difference between the average treated and the average control outcome
+in that unit's main matched group. As shown by Morucci 2021, under standard
+regularity conditions, such an estimator is asymptotically normal and unbiased
+for the true CATE, with a variance that can be estimated by the sum of the
+variance of treated and control outcomes in the matched group, each normalized
+by the number of treated and control units in the matched group, respectively.
+Note that CATEs cannot be estimated for unmatched units and estimator
+variances cannot be computed for units whose main matched group only contains
+a single treated or control unit. Note also that these CATE estimates differ
+from those that are used to compute average treatment effects in
+\code{print.ame} and \code{summary.ame} and from those that will be returned
+in \code{ame_out$data$CATE} if \code{estimate_CATEs = TRUE}. For a treated
+(control) unit \eqn{i}, the latter estimate the treated (control) outcome
+conditioned on \eqn{X = x_i} simply as \eqn{Y_i}, and do not average across
+other treated (control) units in the matched group as is done here. This
+averaging is necessary in order to compute variance estimates. The different
+estimates can always be manually compared, though they are the same in
+expectation (assuming mean 0 noise) and we expect them to be similar in
+practice, in the absence of large noise.
 
-Setting \code{multiple = TRUE} will request that CATEs corresponding to all
-matched groups be returned for each unit -- if \code{\link{FLAME}} was run
-with \code{replace = TRUE} to generate \code{FLAME_out} in the first place.
-Otherwise, if \code{\link{FLAME}} was run with \code{replace = TRUE}, but
-\code{multiple = FALSE}, only the CATE of the main matched groups will be
-returned. The main matched group of a unit contains the first units it
-matches with (and therefore those with which it matches on the largest number
-of covariates). If \code{\link{FLAME}} was run with \code{replace = FALSE},
-then the user should only supply \code{multiple = FALSE}.
-
-Additionally, if \code{\link{FLAME}} was run with \code{missing_data = 2} to
-generate \code{FLAME_out}, then \code{CATE} will return CATE
-information for all \code{missing_data_imputations} imputations.
+Lastly, note that the \code{units} argument refers to units with respect to
+\code{rownames(ame_out$data)}. Typically, this will also correspond to the
+indexing of the data (i.e. passing \code{units = 3} will return the matched
+group of the 3rd unit in the matching data). However, if a separate holdout
+set was not passed to the matching algorithm or if the original matching data
+had rownames other than \code{1:nrow(data)}, then this is not the case.
+}
+\examples{
+\dontrun{
+data <- gen_data()
+holdout <- gen_data()
+FLAME_out <- FLAME(data = data, holdout = holdout)
+CATE(1:5, FLAME_out)
+}
 }
 \seealso{
-\code{\link{FLAME}}
+\code{\link{FLAME}}, \code{\link{DAME}}
 }

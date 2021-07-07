@@ -2,18 +2,29 @@
 % Please edit documentation in R/post_matching.R
 \name{ATE}
 \alias{ATE}
-\title{ATE of a matched dataset}
+\alias{ATT}
+\alias{ATC}
+\title{Average Treatment Effect estimates}
 \usage{
-ATE(FLAME_out)
+ATE(ame_out)
+
+ATT(ame_out)
+
+ATC(ame_out)
 }
 \arguments{
-\item{FLAME_out}{An object returned by running \code{\link{FLAME}}}
+\item{ame_out}{An object of class \code{ame}.}
 }
 \description{
-\code{ATE} computes the average treatment effect (ATE) of a matched dataset.
+\code{ATE}, \code{ATT}, and \code{ATC} estimate the average treatment effect
+(ATE), average treatment effect on the treated (ATT), and average treatment
+effect on the controls (ATC), respectively, of a matched dataset.
 }
 \details{
-The ATE is computed as the difference between the weighted treated and the
-weighted control outcomes in the dataset. A unit's weight is the number of
-times it was matched.
+The ATE is estimated as the average CATE estimate across all matched units in
+the data, while the ATT and ATC average only across matched treated or
+matched control units, respectively.
+}
+\seealso{
+\code{\link{CATE}}
 }

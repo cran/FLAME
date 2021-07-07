@@ -1,304 +1,298 @@
-iterate <- function(fun, units, FLAME_out, multiple) {
-  if (is.null(names(FLAME_out))) { # Is a list of data frames
-    n_df <- length(FLAME_out)
-  }
-  else { # Is a single data frame
-    FLAME_out <- list(FLAME_out)
-    n_df <- 1
-  }
-
-  if (!all(units %in% as.numeric(rownames(FLAME_out[[1]]$data)))) {
-    stop('Supplied a unit not originally passed to FLAME.')
-  }
-
-  out <- vector('list', length = n_df)
-  for (k in 1:n_df) {
-    MGs <- FLAME_out[[k]]$MGs # MGs made by FLAME
-
-    out[[k]] <- vector('list', length = length(units))
-
-    for (i in seq_along(units)) {
-      unit <- units[i]
-
-      # Number of MGs to return for unit
-      # Only > 1 if multiple = TRUE and matched multiple times
-      n_unit_MGs <- ifelse(multiple, FLAME_out[[k]]$data$weight[unit], 1)
-
-      # To store MGs of unit
-      out[[k]][[i]] <- vector('list', length = n_unit_MGs)
-      counter <- 1
-      for (j in 1:length(MGs)) {
-        if (unit %in% MGs[[j]]) {
-          out[[k]][[i]][[counter]] <- fun(FLAME_out[[k]], MGs[[j]], j)
-          counter <- counter + 1
-          if (counter == n_unit_MGs + 1) {
-            break
-          }
-        }
-      }
-    }
-    if (!multiple) {
-      out[[k]] %<>% lapply(`[[`, 1)
-    }
-  }
-  if (n_df == 1) {
-    out <- out[[1]]
-  }
-  return(out)
-}
-
-CATE_internal <- function(FLAME_out, MG, which_MG = NULL) {
-  if (!('outcome' %in% colnames(FLAME_out$data))) {
-    stop(paste0('Outcome not supplied in original call to `FLAME`;',
-                'cannot compute CATE'))
-  }
-  outcomes <- FLAME_out$data$outcome[MG]
-  treated <- FLAME_out$data$treated[MG] == 1
-  CATE <- mean(outcomes[treated]) - mean(outcomes[!treated])
-  return(CATE)
-}
-
-MG_internal <- function(FLAME_out, MG, which_MG) {
-  n_cols <- ncol(FLAME_out$data)
-  col_names <- colnames(FLAME_out$data)
-
-  cov_names <-
-    col_names[which(!(col_names %in%
-                        c('treated', 'outcome', 'weight', 'matched')))]
-
-  keep_inds <-
-    which(!(colnames(FLAME_out$data[MG, ]) %in% c('matched', 'weight')))
-  tmp <- FLAME_out$data[MG, keep_inds]
-
-  keep <-
-    match(names(FLAME_out$matched_on[[which_MG]]), cov_names) %>%
-    c(n_cols - 3, n_cols - 2) # Keep outcome and treatment
-  tmp[, -keep] <- '*'
-  return(tmp)
-}
-
 #' Matched Groups
 #'
 #' \code{MG} returns the matched groups of the supplied units.
 #'
-#' By default, \code{MG} returns the covariate, treatment, and outcome
-#' information for all the units in the relevant matched groups. If only the
-#' indices of units in the matched groups are desired, \code{index_only} can be
-#' set to \code{TRUE}.
+#' The \code{units} argument refers to units with respect to
+#' \code{rownames(ame_out$data)}. Typically, this will also correspond to the
+#' indexing of the data (i.e. passing \code{units = 3} will return the matched
+#' group of the 3rd unit in the matching data). However, if a separate holdout
+#' set was not passed to the matching algorithm or if the original matching data
+#' had rownames other than \code{1:nrow(data)}, then this is not the case.
 #'
-#' Setting \code{multiple = TRUE} will request that all matched groups be
-#' returned for each unit -- if \code{\link{FLAME}} was run with \code{replace =
-#' TRUE} to generate \code{FLAME_out} in the first place. Otherwise, if
-#' \code{\link{FLAME}} was run with \code{replace = TRUE}, but \code{multiple =
-#' FALSE}, only main matched groups will be returned. The main matched group of
-#' a unit contains the first units it matches with (and therefore those with
-#' which it matches on the largest number of covariates). If \code{\link{FLAME}}
-#' was run with \code{replace = FALSE}, then the user should only supply
-#' \code{multiple = FALSE}.
+#' The \code{multiple} argument toggles whether only a unit's main matched group
+#' (MMG) or all matched groups a unit is part of should be returned. A unit's
+#' MMG contains its highest quality matches (that is, the units with which it
+#' first matched in the sequence of considered covariate sets). If the original
+#' call that generated \code{ame_out} specified \code{replace = FALSE} then
+#' units only are part of one matched group (which is also their MMG) and
+#' \code{multiple} must be set to \code{FALSE}.
 #'
-#' Additionally, if \code{\link{FLAME}} was run with \code{missing_data = 2} to
-#' generate \code{FLAME_out}, then \code{MG} will return matched group
-#' information for all \code{missing_data_imputations} imputations.
-#'
-#' @seealso \code{\link{FLAME}}
-#'
-#' @param units A vector of indices for the units whose matched groups
-#' are desired.
-#' @param FLAME_out The output of a call to \code{\link{FLAME}}.
+#' @param units A vector of units whose matched groups are desired.
+#' @param ame_out An object of class \code{ame}.
 #' @param multiple A logical scalar. If \code{FALSE} (default), then \code{MG}
-#'   will only return a main matched group for each unit (the first matched
-#'   group that unit was a part of). See below for details.
-#' @param index_only A logical scalar. If \code{TRUE} then only the indices of
-#' units in each matched group are returned.
+#'   will only return the main matched group for each unit. See below for
+#'   details. Cannot be set to \code{TRUE} if \code{ame_out} was generated
+#'   without replacement.
+#' @param id_only A logical scalar. If \code{TRUE}, then only the IDs of the
+#'   units in each matched group are returned, and not their treatment, outcome,
+#'   or covariate information.
+#' @param index_only Defunct. Use `id_only` instead.
 #'
-#' @return \strong{If passing a single set of matched data}
+#' @return
 #'
-#'   A list of length \code{length(units)}. Each entry is a data frame (if
-#'   \code{multiple = FALSE}) or a list of data frames (if \code{multiple =
-#'   TRUE}). For a given entry, these data frames are subsets of \code{data}
-#'   passed to \code{\link{FLAME}} to generate \code{FLAME_out}, whose rows
-#'   correspond to the units in the matched group(s) of that entry. If a unit
-#'   is not matched, the corresponding CATE will be \code{NULL}.
+#'   A list of length \code{length(units)}, each entry of which corresponds to a
+#'   different unit in \code{units}. For matched units, if \code{multiple =
+#'   FALSE}, each entry is 1. a data frame containing the treatment and outcome
+#'   information of members of the matched group, along with covariates they
+#'   were matched on if \code{id_only = FALSE} or 2. a vector of the IDs of
+#'   matched units if \code{id_only = TRUE} . If \code{multiple = TRUE}, each
+#'   entry of the returned list is a list containing the previously described
+#'   information, but with each entry corresponding to a different matched
+#'   group. In either case, entries corresponding to unmatched units are
+#'   \code{NULL}.
+#' @examples
+#' \dontrun{
+#' data <- gen_data()
+#' holdout <- gen_data()
+#' FLAME_out <- FLAME(data = data, holdout = holdout, replace = TRUE)
 #'
-#'   The starred entries (*) in the returned data frames have the same meaning
-#'   as in \code{FLAME_out$data}, except for if both \code{multiple = TRUE} and
-#'   \code{replace = TRUE}. In this case, if \emph{all} units do not match on a
-#'   given covariate, all entries of that covariate will be starred, even though
-#'   a subset of the units may have matched on them. This is done so that it is
-#'   clear on which covariates these units match.
+#' # Only the main matched group of unit 1
+#' MG(1, FLAME_out, multiple = F)
 #'
-#'   Note that this is the return format also if passing a single set of
-#'   imputed data.
-#'
-#'   \strong{If passing multiple sets of matched, imputed data}
-#'
-#'   A list of length \code{length(FLAME_out)}, where each entry has the
-#'   structure described above, corresponding to that imputed data set.
-#'
+#' # All matched groups of unit 1
+#' MG(1, FLAME_out, multiple = T)
+#' }
 #' @export
-MG <- function(units, FLAME_out, multiple = FALSE, index_only = FALSE) {
-  MGs <- iterate(MG_internal, units, FLAME_out, multiple)
-  if (index_only) {
-    return(lapply(MGs, function(x) as.numeric(rownames(x))))
+MG <- function(units, ame_out, multiple = FALSE,
+               id_only = FALSE, index_only) {
+
+  if (!missing(index_only)) {
+    stop('Argument `index_only` is defunct and will be removed in a later',
+         'release; please use `id_only` instead.')
   }
-  return(MGs)
+
+  if (multiple && !ame_out$info$replacement) {
+    stop(paste('Multiple matched groups cannot be queried if',
+               ame_out$info$algo, 'was run without replacement.'))
+  }
+
+  if (any(!(units %in% as.numeric(rownames(ame_out$data))))) {
+    stop('Supplied a unit not in the matched data.')
+  }
+
+  # In the case that the rownames of the original data frame were not 1:n
+  # or that a holdout set was not explicitly passed to the algo
+  units <- match(units, rownames(ame_out$data))
+
+  if (id_only & !multiple) {
+    return(lapply(ame_out$MGs[units], function(z) {
+      if (is.null(z)) {
+        NULL
+      }
+      else {
+        rownames(ame_out$data)[z]
+      }
+    }))
+  }
+
+  outcome_name <- ame_out$info$outcome
+  treated_name <- ame_out$info$treatment
+
+  col_names <- colnames(ame_out$data)
+
+  cov_inds <-
+    which(!(col_names %in%
+              c(treated_name, outcome_name, 'weight', 'matched', 'MG', 'CATE')))
+
+  all_MGs <- vector('list', length(units))
+  all_MGs <- lapply(all_MGs, function(x) x <- vector('list', 1))
+
+  for (i in seq_along(units)) {
+    if (is.null(ame_out$MGs[[units[i]]])) {
+      next
+    }
+
+    if (!multiple) {
+      MGs_to_return <- units[i]
+    }
+    else {
+      in_MG <-
+        which(vapply(ame_out$MGs, function(x) units[i] %in% x, logical(1)))
+      MGs_to_return <- in_MG[!duplicated(ame_out$MGs[in_MG])]
+    }
+
+    for (j in seq_along(MGs_to_return)) {
+
+      if (id_only) {
+        all_MGs[[i]][[j]] <-
+          rownames(ame_out$data)[ame_out$MGs[[MGs_to_return[j]]]]
+        next
+      }
+
+      MG_all_cols <-
+        ame_out$data[ame_out$MGs[[MGs_to_return[j]]], , drop = FALSE]
+
+      # Can't just iterate one covariate at a time because for FLAME the
+      # following might happen: 1. two units don't match exactly, 2. a covariate
+      # they have identical values of is dropped, 3. the covariate they differ
+      # on is now also dropped. In this case, the units technically were not
+      # matched on that first dropped covariate. You could argue it should be
+      # shown anyway, but at least for now, for consistency with the python
+      # code, we'll ignore it.
+      for (cov_set in ame_out$cov_sets) {
+        matched_on <- setdiff(col_names[cov_inds], cov_set)
+        data <- data.matrix(MG_all_cols[, matched_on, drop = FALSE])
+        tmp <- colSums(sweep(data, 2, data[1, ]) ^ 2)
+        if (any(is.na(tmp))) {
+          next
+        }
+        if (all(tmp == 0)) {
+          all_MGs[[i]][[j]] <-
+            MG_all_cols[, c(matched_on, treated_name, outcome_name)]
+          break
+        }
+      }
+    }
+  }
+
+  if (!multiple) {
+    all_MGs <- lapply(all_MGs, `[[`, 1)
+  }
+
+  return(all_MGs)
 }
 
 #' Conditional Average Treatment Effects
 #'
-#' \code{CATE} returns the conditional
-#' average treatment effects (CATEs) of \code{units}.
+#' \code{CATE} returns an estimate of the conditional average treatment effect
+#' for the subgroup defined by \code{units}.
 #'
-#' The CATE of a matched group is defined to be the difference between average
-#' treated and control outcomes within that matched group. When we refer to
-#' the CATE(s) of a unit, we mean the CATE(s) of its matched group(s).
+#'This function returns CATE estimates and the estimated variances of such
+#'estimates for \code{units} of interest. The CATE of a given unit is estimated
+#'by the difference between the average treated and the average control outcome
+#'in that unit's main matched group. As shown by Morucci 2021, under standard
+#'regularity conditions, such an estimator is asymptotically normal and unbiased
+#'for the true CATE, with a variance that can be estimated by the sum of the
+#'variance of treated and control outcomes in the matched group, each normalized
+#'by the number of treated and control units in the matched group, respectively.
+#'Note that CATEs cannot be estimated for unmatched units and estimator
+#'variances cannot be computed for units whose main matched group only contains
+#'a single treated or control unit. Note also that these CATE estimates differ
+#'from those that are used to compute average treatment effects in
+#'\code{print.ame} and \code{summary.ame} and from those that will be returned
+#'in \code{ame_out$data$CATE} if \code{estimate_CATEs = TRUE}. For a treated
+#'(control) unit \eqn{i}, the latter estimate the treated (control) outcome
+#'conditioned on \eqn{X = x_i} simply as \eqn{Y_i}, and do not average across
+#'other treated (control) units in the matched group as is done here. This
+#'averaging is necessary in order to compute variance estimates. The different
+#'estimates can always be manually compared, though they are the same in
+#'expectation (assuming mean 0 noise) and we expect them to be similar in
+#'practice, in the absence of large noise.
 #'
-#' Setting \code{multiple = TRUE} will request that CATEs corresponding to all
-#' matched groups be returned for each unit -- if \code{\link{FLAME}} was run
-#' with \code{replace = TRUE} to generate \code{FLAME_out} in the first place.
-#' Otherwise, if \code{\link{FLAME}} was run with \code{replace = TRUE}, but
-#' \code{multiple = FALSE}, only the CATE of the main matched groups will be
-#' returned. The main matched group of a unit contains the first units it
-#' matches with (and therefore those with which it matches on the largest number
-#' of covariates). If \code{\link{FLAME}} was run with \code{replace = FALSE},
-#' then the user should only supply \code{multiple = FALSE}.
+#' Lastly, note that the \code{units} argument refers to units with respect to
+#' \code{rownames(ame_out$data)}. Typically, this will also correspond to the
+#' indexing of the data (i.e. passing \code{units = 3} will return the matched
+#' group of the 3rd unit in the matching data). However, if a separate holdout
+#' set was not passed to the matching algorithm or if the original matching data
+#' had rownames other than \code{1:nrow(data)}, then this is not the case.
 #'
-#' Additionally, if \code{\link{FLAME}} was run with \code{missing_data = 2} to
-#' generate \code{FLAME_out}, then \code{CATE} will return CATE
-#' information for all \code{missing_data_imputations} imputations.
+#' @seealso \code{\link{FLAME}}, \code{\link{DAME}}
 #'
-#' @seealso \code{\link{FLAME}}
+#' @param units A vector of units whose CATE estimates are desired.
+#' @param ame_out An object of class \code{ame}.
 #'
-#' @param units A vector of indices for the units whose CATEs
-#'   are desired.
-#' @param FLAME_out The output of a call to \code{\link{FLAME}}.
-#' @param multiple A logical scalar. If \code{FALSE} (default), then \code{CATE}
-#'   will return CATEs of main matched groups (those with matches on the
-#'   greatest number of covariates). See below for details.
+#' @return A matrix whose columns correspond to CATE estimates and their
+#'   variances and whose rows correspond to queried units. \code{NA}'s therein
+#'   correspond to inestimable quantities.
 #'
-#' @return \strong{If passing a single set of matched data}
-#'
-#'   A list of length \code{length(units)}. Each entry is a CATE (a numeric
-#'   scalar) (if \code{multiple = FALSE}) or a list of CATEs (if \code{multiple
-#'   = TRUE}). If a unit is not matched, the corresponding CATE will be
-#'   \code{NULL}.
-#'
-#'   Note that this is the return format also if passing a single set of
-#'   imputed data.
-#'
-#'   \strong{If passing multiple sets of matched, imputed data}
-#'
-#'   A list of length \code{length(FLAME_out)}, where each entry has the
-#'   structure described above, corresponding to that imputed data set.
-#'
+#' @examples
+#' \dontrun{
+#' data <- gen_data()
+#' holdout <- gen_data()
+#' FLAME_out <- FLAME(data = data, holdout = holdout)
+#' CATE(1:5, FLAME_out)
+#' }
 #' @export
-CATE <- function(units, FLAME_out, multiple = FALSE) {
-  return(iterate(CATE_internal, units, FLAME_out, multiple))
-}
+CATE <- function(units, ame_out) {
 
-#' ATE of a matched dataset
-#'
-#' \code{ATE} computes the average treatment effect (ATE) of a matched dataset.
-#'
-#' The ATE is computed as the difference between the weighted treated and the
-#' weighted control outcomes in the dataset. A unit's weight is the number of
-#' times it was matched.
-#'
-#' @param FLAME_out An object returned by running \code{\link{FLAME}}
-#' @export
-ATE <- function(FLAME_out) {
 
-  if (is.null(names(FLAME_out))) { # Is a list of data frames
-    n_df <- length(FLAME_out)
-  }
-  else { # Is a single data frame
-    FLAME_out <- list(FLAME_out)
-    n_df <- 1
+  if (any(!(units %in% as.numeric(rownames(ame_out$data))))) {
+    stop('Supplied a unit not in the matched data.')
   }
 
-  if (!('outcome' %in% colnames(FLAME_out[[1]]$data))) {
-    stop('Outcome was not supplied with data; cannot estimate ATE.')
+  # In the case that the rownames of the original data frame were not 1:n
+  # or that a holdout set was not explicitly passed to the algo
+  units <- match(units, rownames(ame_out$data))
+
+  if (ame_out$info$outcome_type != 'continuous') {
+    stop('CATEs and their variance estimates can only be computed for ',
+         'continuous outcomes.')
   }
 
-  out <- vector('numeric', length = n_df)
+  CATE_mat <- matrix(nrow = length(units), ncol = 2,
+                     dimnames = list(units, c('Mean', 'Variance')))
 
-  for (i in 1:n_df) {
-    weight <- FLAME_out[[i]]$data$weight
-    CATEs <- FLAME_out[[i]]$CATE
-    MGs <- FLAME_out[[i]]$MGs
+  Tr <- ame_out$data[[ame_out$info$treatment]]
+  Y <- ame_out$data[[ame_out$info$outcome]]
+  n <- length(Y)
 
-    weight_sum <- 0
-    weighted_CATE_sum <- 0
-
-    for (j in 1:length(MGs)) {
-      MG_weight <- sum(weight[MGs[[j]]])
-      weight_sum <- weight_sum + MG_weight
-      weighted_CATE_sum <- weighted_CATE_sum + MG_weight * CATEs[[j]]
+  for (unit in units) {
+    mg <- ame_out$MGs[[unit]]
+    if (is.null(mg)) {
+      next
     }
 
-    ATE <- weighted_CATE_sum / weight_sum
-    out[i] <- ATE
+    control <- mg[Tr[mg] == 0]
+    treated <- mg[Tr[mg] == 1]
+
+    CATE_mat[as.character(unit), 'Mean'] <- mean(Y[treated]) - mean(Y[control])
+    CATE_mat[as.character(unit), 'Variance'] <-
+      var(Y[treated]) / length(treated) +
+      var(Y[control]) / length(control)
   }
-  return(out)
+
+  return(CATE_mat)
 }
 
-#' ATT of a matched dataset
+#' Average Treatment Effect estimates
 #'
-#' \code{ATT} computes the average treatment effect on the treated (ATT) of a
-#' matched dataset.
+#' \code{ATE}, \code{ATT}, and \code{ATC} estimate the average treatment effect
+#' (ATE), average treatment effect on the treated (ATT), and average treatment
+#' effect on the controls (ATC), respectively, of a matched dataset.
 #'
-#' The counterfactual outcome of each treated unit is estimated via the mean
-#' outcome of control units in its matched group. This value is then averaged
-#' across all treated units to compute the ATT.
-#' @param FLAME_out An object returned by running \code{\link{FLAME}}
+#' The ATE is estimated as the average CATE estimate across all matched units in
+#' the data, while the ATT and ATC average only across matched treated or
+#' matched control units, respectively.
+#' @seealso \code{\link{CATE}}
+#' @param ame_out An object of class \code{ame}.
 #' @export
-ATT <- function(FLAME_out) {
-  if (is.null(names(FLAME_out))) { # Is a list of data frames
-    n_df <- length(FLAME_out)
+ATE <- function(ame_out) {
+  .Deprecated(msg = paste('`ATE` is now deprecated, as ATE, ATT, and ATC mean',
+                          'and variance estimates are now computed in the',
+                          '`summary.ame` method'))
+  if (ame_out$info$estimate_CATEs &&
+      ame_out$info$outcome_type == 'continuous') {
+    return(mean(ame_out$data$CATE, na.rm = TRUE))
   }
-  else { # Is a single data frame
-    FLAME_out <- list(FLAME_out)
-    n_df <- 1
+  return(get_average_effects(ame_out)['All', 'Mean'])
+}
+
+#' @rdname ATE
+#' @export
+ATT <- function(ame_out) {
+  .Deprecated(msg = paste('`ATT` is now deprecated, as ATE, ATT, and ATC mean',
+                          'and variance estimates are now computed in the',
+                          '`summary.ame` method'))
+  if (ame_out$info$estimate_CATEs &&
+      ame_out$info$outcome_type == 'continuous') {
+    return(mean(ame_out$data$CATE[ame_out$data[[ame_out$info$treatment]] == 1],
+                na.rm = TRUE))
   }
+  return(get_average_effects(ame_out)['Treated', 'Mean'])
+}
 
-  if (!('outcome' %in% colnames(FLAME_out[[1]]$data))) {
-    stop('Outcome was not supplied with data; cannot estimate ATT.')
+
+#' @rdname ATE
+#' @export
+ATC <- function(ame_out) {
+  .Deprecated(msg = paste('`ATC` is now deprecated, as ATE, ATT, and ATC mean',
+                          'and variance estimates are now computed in the',
+                          '`summary.ame` method'))
+
+  if (ame_out$info$estimate_CATEs &&
+      ame_out$info$outcome_type == 'continuous') {
+   return(mean(ame_out$data$CATE[ame_out$data[[ame_out$info$treatment]] == 0],
+               na.rm = TRUE))
   }
-
-  out <- vector('numeric', length = n_df)
-
-  controls <- which(FLAME_out[[1]]$data$treated == 0)
-  treated <- which(FLAME_out[[1]]$data$treated == 1)
-
-  outcomes <- FLAME_out[[1]]$data$outcome
-
-  for (i in 1:n_df) {
-    weight <- FLAME_out[[i]]$data$weight
-
-    MGs <- FLAME_out[[i]]$MGs
-
-    weight_sum <- 0
-    weighted_TT_sum <- 0
-
-    for (j in 1:length(MGs)) {
-
-      MG_controls <- MGs[[j]][MGs[[j]] %in% controls]
-      MG_treated <- MGs[[j]][MGs[[j]] %in% treated]
-
-      MG_weight <- sum(weight[MG_controls])
-      weight_sum <- weight_sum + MG_weight
-
-      mean_control_outcome <- mean(outcomes[MG_controls])
-
-      for (k in seq_along(MG_treated)) {
-        weighted_TT_sum <-
-          weighted_TT_sum +
-          MG_weight * (outcomes[MG_treated[k]] - mean_control_outcome)
-      }
-    }
-
-    ATT <- weighted_TT_sum / weight_sum
-    out[i] <- ATT
-  }
-  return(out)
+  return(get_average_effects(ame_out)['Control', 'Mean'])
 }
